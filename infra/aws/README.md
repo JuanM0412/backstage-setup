@@ -63,9 +63,12 @@ Add these GitHub environment variables to `backstage-production`:
 - `APP_BASE_URL`: public URL used by the Backstage frontend
 - `BACKEND_BASE_URL`: public URL used by the Backstage backend
 
-These are variables, not secrets. Initially, both can use the ALB URL returned
-by `kubectl -n backstage get ingress backstage`; update them to the final HTTPS
-URL when a domain and certificate are configured.
+These are variables, not secrets. Because the ALB hostname is created by the
+first Kubernetes deployment, the workflow temporarily uses `http://localhost`
+when these variables are absent. After that first deployment, obtain the
+hostname with `kubectl -n backstage get ingress backstage`, save it in both
+variables, and run the deployment again. When a domain and certificate are
+configured, update them to the final HTTPS URL.
 
 The EKS cluster must also have the AWS Load Balancer Controller installed
 before applying `deploy/k8s/ingress.yaml`. The ingress

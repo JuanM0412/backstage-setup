@@ -66,12 +66,12 @@ jobs:
             exit 1
           fi
           if [ -z "$APP_BASE_URL" ]; then
-            echo "::error::APP_BASE_URL environment variable is required"
-            exit 1
+            APP_BASE_URL="http://localhost"
+            echo "::warning::APP_BASE_URL is not configured; using http://localhost for bootstrap"
           fi
           if [ -z "$BACKEND_BASE_URL" ]; then
-            echo "::error::BACKEND_BASE_URL environment variable is required"
-            exit 1
+            BACKEND_BASE_URL="http://localhost"
+            echo "::warning::BACKEND_BASE_URL is not configured; using http://localhost for bootstrap"
           fi
           escape_sed_replacement() {
             printf '%s' "$1" | sed 's/[&|]/\\&/g'
