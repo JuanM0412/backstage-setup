@@ -58,13 +58,31 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           BACKSTAGE_DATABASE_URL: ${{ secrets.BACKSTAGE_DATABASE_URL }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+          BACKEND_BASE_URL: ${{ vars.BACKEND_BASE_URL }}
         run: |
           if [ -z "$BACKSTAGE_DATABASE_URL" ]; then
             echo "::error::BACKSTAGE_DATABASE_URL secret is required"
             exit 1
           fi
+          if [ -z "$APP_BASE_URL" ]; then
+            echo "::error::APP_BASE_URL environment variable is required"
+            exit 1
+          fi
+          if [ -z "$BACKEND_BASE_URL" ]; then
+            echo "::error::BACKEND_BASE_URL environment variable is required"
+            exit 1
+          fi
+          escape_sed_replacement() {
+            printf '%s' "$1" | sed 's/[&|]/\\&/g'
+          }
+          app_base_url="$(escape_sed_replacement "$APP_BASE_URL")"
+          backend_base_url="$(escape_sed_replacement "$BACKEND_BASE_URL")"
           kubectl apply -f deploy/k8s/namespace.yaml
-          kubectl apply -f deploy/k8s/configmap.yaml
+          sed \
+            -e "s|__APP_BASE_URL__|$app_base_url|g" \
+            -e "s|__BACKEND_BASE_URL__|$backend_base_url|g" \
+            deploy/k8s/configmap.yaml | kubectl apply -f -
           kubectl -n backstage create secret generic backstage-database \
             --from-literal=POSTGRESQL_ADDON_URI="$BACKSTAGE_DATABASE_URL" \
             --dry-run=client -o yaml | kubectl apply -f -

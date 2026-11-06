@@ -4,5 +4,5 @@ metadata:
   name: backstage-config
   namespace: backstage
 data:
-  APP_BASE_URL: http://localhost
-  BACKEND_BASE_URL: http://localhost
+  APP_BASE_URL: __APP_BASE_URL__
+  BACKEND_BASE_URL: __BACKEND_BASE_URL__
