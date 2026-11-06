@@ -1,0 +1,4 @@
+aws_region       = "us-east-1"
+name             = "backstage"
+github_repository = "backstage-backend/backstage-setup"
+github_branch    = "main"

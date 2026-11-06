@@ -107,7 +107,7 @@ spec:
         repoUrl: github.com?owner=backstage-backend&repo=${{ parameters.name }}
         description: ${{ parameters.description }}
         defaultBranch: main
-        repoVisibility: private
+        repoVisibility: public
 
     - id: create-branches
       name: Create development branches

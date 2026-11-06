@@ -28,12 +28,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
 
       - name: Test Node.js service
         if: hashFiles('package.json') != ''
         run: |
-          npm ci
+          npm install
           npm test
 
       - name: Set up Python
@@ -50,7 +49,25 @@ jobs:
           pip install -r requirements.txt
           pytest
 
-      - name: Validate Terraform
+      - name: SonarCloud Scan
+        if: {% raw %}${{ vars.SONAR_ENABLED == 'true' }}{% endraw %}
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
+        with:
+          args: >
+            -Dsonar.projectKey=backstage-backend_{% raw %}${{ github.event.repository.name }}{% endraw %}
+            -Dsonar.organization=backstage-backend
+        env:
+          GITHUB_TOKEN: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+          SONAR_TOKEN: {% raw %}${{ secrets.SONAR_TOKEN }}{% endraw %}
+          SONAR_HOST_URL: {% raw %}${{ vars.SONAR_HOST_URL }}{% endraw %}
+
+      - name: Set up Terraform
+        if: hashFiles('terraform/**/*.tf') != ''
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+
+      - name: Run Terraform validation
         if: hashFiles('terraform/**/*.tf') != ''
         run: |
           terraform fmt -check -recursive
@@ -58,4 +75,4 @@ jobs:
           terraform validate
 
       - name: Build container
-        run: docker build --tag "${{ github.repository }}:${{ github.sha }}" .
+        run: docker build --tag "{% raw %}${{ github.repository }}:${{ github.sha }}{% endraw %}" .

@@ -45,6 +45,10 @@ site
 
 # Sensitive credentials
 *-credentials.yaml
+infra/aws/*.tfvars
+infra/aws/*.tfstate
+infra/aws/*.tfstate.*
+infra/aws/.terraform/
 
 # vscode database functionality support files
 *.session.sql

@@ -57,3 +57,18 @@ and
 
 - [Backstage Readme](https://github.com/backstage/backstage/blob/master/README.md)
 - [Backstage Documentation](https://backstage.io/docs)
+## Database
+
+Local development uses the in-memory SQLite database configured in
+`app-config.yaml`, so no PostgreSQL environment variables are required:
+
+```bash
+yarn start
+```
+
+For deployments using Clever Cloud, the production configuration in
+`app-config.production.yaml` expects the PostgreSQL add-on connection string:
+
+```bash
+export POSTGRESQL_ADDON_URI='postgresql://...'
+```
