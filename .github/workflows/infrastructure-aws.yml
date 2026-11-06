@@ -17,7 +17,7 @@ permissions:
   pull-requests: write
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: us-east-2
   TF_STATE_KEY: backstage/terraform.tfstate
 
 jobs:
