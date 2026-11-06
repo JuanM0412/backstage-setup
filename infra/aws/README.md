@@ -31,8 +31,9 @@ After the first apply, use the `AWS Infrastructure` workflow for subsequent
 plans and applies. Configure the `TF_STATE_BUCKET` repository variable and the
 AWS IAM user credentials described below.
 
-The infrastructure workflow only applies when manually dispatched with
-`apply=true`; pull requests run `plan` only.
+The infrastructure workflow runs `terraform apply` automatically for matching
+pushes. A manual dispatch with `apply=true` also applies the infrastructure;
+manual dispatches with `apply=false` run only `terraform plan`.
 
 The RDS endpoint is private and is reachable from EKS nodes only. Do not make
 the RDS instance publicly accessible.
