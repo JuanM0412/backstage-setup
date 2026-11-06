@@ -1,0 +1,61 @@
+name: Build Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - release
+  push:
+    branches:
+      - main
+      - develop
+      - release
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: build-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        if: hashFiles('package.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Test Node.js service
+        if: hashFiles('package.json') != ''
+        run: |
+          npm ci
+          npm test
+
+      - name: Set up Python
+        if: hashFiles('requirements.txt') != ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Test Python service
+        if: hashFiles('requirements.txt') != ''
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pytest
+
+      - name: Validate Terraform
+        if: hashFiles('terraform/**/*.tf') != ''
+        run: |
+          terraform fmt -check -recursive
+          terraform init -backend=false
+          terraform validate
+
+      - name: Build container
+        run: docker build --tag "${{ github.repository }}:${{ github.sha }}" .

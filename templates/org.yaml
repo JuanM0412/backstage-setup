@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: wenia
+  description: Wenia engineering team
+spec:
+  type: team
+  profile:
+    displayName: Wenia
+  children: []
