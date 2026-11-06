@@ -33,11 +33,12 @@ module "eks" {
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
 
+  enable_irsa                              = false
   enable_cluster_creator_admin_permissions = true
 
   eks_managed_node_groups = {
     default = {
-      instance_types = ["t3.medium"]
+      instance_types = ["t3.micro"]
       min_size       = 2
       max_size       = 4
       desired_size   = 2
@@ -68,7 +69,7 @@ module "rds" {
   subnet_ids             = module.vpc.private_subnets
   vpc_security_group_ids = [aws_security_group.rds.id]
 
-  backup_retention_period = 7
+  backup_retention_period = 0
   skip_final_snapshot     = true
 }
 
