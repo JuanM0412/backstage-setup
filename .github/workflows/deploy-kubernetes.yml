@@ -3,7 +3,7 @@ name: Deploy Backstage to Kubernetes
 on:
   push:
     branches:
-      - main
+      - master
     paths-ignore:
       - infra/aws/**
   workflow_dispatch:
