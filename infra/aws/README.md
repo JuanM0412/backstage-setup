@@ -20,7 +20,7 @@ cp terraform.tfvars.example terraform.tfvars
 terraform init \
   -backend-config="bucket=YOUR_TF_STATE_BUCKET" \
   -backend-config="key=backstage/terraform.tfstate" \
-  -backend-config="region=us-east-1" \
+  -backend-config="region=us-east-2" \
   -backend-config="encrypt=true"
 terraform fmt -check -recursive
 terraform plan
