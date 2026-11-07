@@ -82,6 +82,10 @@ jobs:
             console.error('::error::BACKSTAGE_DATABASE_URL must target the backstage database (/backstage)');
             process.exit(1);
           }
+          if (parsed.searchParams.has('sslmode')) {
+            console.error('::error::Remove sslmode from BACKSTAGE_DATABASE_URL; SSL is configured by app-config.production.yaml');
+            process.exit(1);
+          }
           NODE
           if [ -z "$APP_BASE_URL" ]; then
             APP_BASE_URL="http://localhost"
