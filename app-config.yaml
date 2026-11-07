@@ -188,14 +188,14 @@ catalog:
   rules:
     - allow: [Component, System, API, Resource, Location]
   locations:
-    # Paths are relative to the backend process working directory.
+    # Paths are relative to the backend package directory: packages/backend.
     - type: file
-      target: ./templates/microservice/template.yaml
+      target: ../../templates/microservice/template.yaml
       rules:
         - allow: [Template]
 
     - type: file
-      target: ./templates/org.yaml
+      target: ../../templates/org.yaml
       rules:
         - allow: [Group]
 

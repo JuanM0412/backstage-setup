@@ -69,6 +69,7 @@ spec:
         values:
           name: ${{ parameters.name }}
           description: ${{ parameters.description }}
+          language: ${{ parameters.language }}
 
     - id: fetch-python
       name: Generate Python files
@@ -79,6 +80,7 @@ spec:
         values:
           name: ${{ parameters.name }}
           description: ${{ parameters.description }}
+          language: ${{ parameters.language }}
 
     - id: fetch-kubernetes
       name: Generate Kubernetes files
@@ -99,6 +101,7 @@ spec:
         values:
           name: ${{ parameters.name }}
           description: ${{ parameters.description }}
+          language: ${{ parameters.language }}
 
     - id: publish
       name: Publish repository
