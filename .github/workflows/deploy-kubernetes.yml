@@ -58,11 +58,16 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           BACKSTAGE_DATABASE_URL: ${{ secrets.BACKSTAGE_DATABASE_URL }}
+          BACKSTAGE_GITHUB_TOKEN: ${{ secrets.BACKSTAGE_GITHUB_TOKEN }}
           APP_BASE_URL: ${{ vars.APP_BASE_URL }}
           BACKEND_BASE_URL: ${{ vars.BACKEND_BASE_URL }}
         run: |
           if [ -z "$BACKSTAGE_DATABASE_URL" ]; then
             echo "::error::BACKSTAGE_DATABASE_URL secret is required"
+            exit 1
+          fi
+          if [ -z "$BACKSTAGE_GITHUB_TOKEN" ]; then
+            echo "::error::BACKSTAGE_GITHUB_TOKEN secret is required"
             exit 1
           fi
           BACKSTAGE_DATABASE_URL="$BACKSTAGE_DATABASE_URL" node <<'NODE'
@@ -107,6 +112,9 @@ jobs:
             deploy/k8s/configmap.yaml | kubectl apply -f -
           kubectl -n backstage create secret generic backstage-database \
             --from-literal=POSTGRESQL_ADDON_URI="$BACKSTAGE_DATABASE_URL" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          kubectl -n backstage create secret generic backstage-github \
+            --from-literal=GITHUB_TOKEN="$BACKSTAGE_GITHUB_TOKEN" \
             --dry-run=client -o yaml | kubectl apply -f -
           sed "s#BACKSTAGE_IMAGE#$REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA}#" \
             deploy/k8s/deployment.yaml | kubectl apply -f -

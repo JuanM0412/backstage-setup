@@ -7,6 +7,10 @@ The GitHub deployment workflow creates the `backstage-database` Secret from
 the `BACKSTAGE_DATABASE_URL` GitHub secret. Never commit a populated Secret
 manifest. `secret.example.yaml` is documentation only.
 
+The workflow also creates the `backstage-github` Secret from the
+`BACKSTAGE_GITHUB_TOKEN` GitHub secret. This must be a GitHub token with access
+to create repositories and branches in the configured organization.
+
 The workflow replaces the `__APP_BASE_URL__` and `__BACKEND_BASE_URL__`
 placeholders in `configmap.yaml` from the `APP_BASE_URL` and
 `BACKEND_BASE_URL` variables in the `backstage-production` GitHub environment.

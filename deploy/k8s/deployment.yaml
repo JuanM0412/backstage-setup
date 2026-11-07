@@ -25,6 +25,11 @@ spec:
                 secretKeyRef:
                   name: backstage-database
                   key: POSTGRESQL_ADDON_URI
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: backstage-github
+                  key: GITHUB_TOKEN
             - name: APP_BASE_URL
               valueFrom:
                 configMapKeyRef:
