@@ -89,6 +89,11 @@ query parameter. SSL is configured by `app-config.production.yaml`, where
 `rejectUnauthorized: false` is required for the RDS certificate chain in this
 environment.
 
+The current HTTP-only bootstrap also disables insecure-request upgrades and
+allows the guest provider. Before exposing this deployment publicly, configure
+HTTPS with an ACM certificate and replace guest authentication with a real
+provider.
+
 Add these GitHub environment variables to `backstage-production`:
 
 - `APP_BASE_URL`: public URL used by the Backstage frontend

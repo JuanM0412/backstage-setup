@@ -16,6 +16,8 @@ backend:
     origin: ${APP_BASE_URL}
     methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
     credentials: true
+  csp:
+    upgrade-insecure-requests: false
 
   # config options: https://node-postgres.com/apis/client
   # Clever Cloud provides the complete connection string as POSTGRESQL_ADDON_URI.
@@ -30,7 +32,8 @@ backend:
 
 auth:
   providers:
-    guest: {}
+    guest:
+      dangerouslyAllowOutsideDevelopment: true
 
 catalog:
   # Overrides the default list locations from app-config.yaml as these contain example data.
