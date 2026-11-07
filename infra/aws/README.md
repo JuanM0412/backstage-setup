@@ -84,6 +84,7 @@ postgresql://USERNAME:PASSWORD@RDS_ENDPOINT:5432/backstage
 
 URL-encode any special characters in the username or password. Do not use
 placeholders such as `base`, `RDS_ENDPOINT`, or `PASSWORD` in the GitHub secret.
+The production configuration enables PostgreSQL SSL for the RDS connection.
 
 Add these GitHub environment variables to `backstage-production`:
 
