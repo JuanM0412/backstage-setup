@@ -79,12 +79,14 @@ Use the returned `host`, `port`, `username`, `password`, and `dbname` values to
 build `BACKSTAGE_DATABASE_URL`, for example:
 
 ```text
-postgresql://USERNAME:PASSWORD@RDS_ENDPOINT:5432/backstage
+postgresql://USERNAME:PASSWORD@RDS_ENDPOINT:5432/backstage?sslmode=require
 ```
 
 URL-encode any special characters in the username or password. Do not use
 placeholders such as `base`, `RDS_ENDPOINT`, or `PASSWORD` in the GitHub secret.
-The production configuration enables PostgreSQL SSL for the RDS connection.
+The URI must end in `/backstage`; do not use `/postgres`. The
+`sslmode=require` option and the production configuration both enable
+PostgreSQL SSL for the RDS connection.
 
 Add these GitHub environment variables to `backstage-production`:
 

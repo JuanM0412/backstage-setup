@@ -78,6 +78,10 @@ jobs:
             console.error('::error::BACKSTAGE_DATABASE_URL must use postgres:// or postgresql:// and include a hostname');
             process.exit(1);
           }
+          if (parsed.pathname !== '/backstage') {
+            console.error('::error::BACKSTAGE_DATABASE_URL must target the backstage database (/backstage)');
+            process.exit(1);
+          }
           NODE
           if [ -z "$APP_BASE_URL" ]; then
             APP_BASE_URL="http://localhost"

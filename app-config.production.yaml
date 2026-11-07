@@ -17,11 +17,12 @@ backend:
   # Clever Cloud provides the complete connection string as POSTGRESQL_ADDON_URI.
   database:
     client: pg
-    connection: ${POSTGRESQL_ADDON_URI}
+    connection:
+      connectionString: ${POSTGRESQL_ADDON_URI}
+      ssl:
+        rejectUnauthorized: false
     pluginDivisionMode: schema
     ensureSchemaExists: true
-    ssl:
-      rejectUnauthorized: false
 
 auth:
   providers:
