@@ -40,14 +40,14 @@ catalog:
   # See https://backstage.io/docs/features/software-catalog/#adding-components-to-the-catalog for more details
   # on how to get entities into the catalog.
   locations:
-    # Paths are relative to the backend process directory: packages/backend
+    # Paths are relative to the backend process working directory.
     - type: file
-      target: ../../templates/microservice/template.yaml
+      target: ./templates/microservice/template.yaml
       rules:
         - allow: [Template]
 
     - type: file
-      target: ../../templates/org.yaml
+      target: ./templates/org.yaml
       rules:
         - allow: [Group]
 
