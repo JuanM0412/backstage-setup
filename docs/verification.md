@@ -50,7 +50,8 @@ separate AWS infrastructure provisioning.
 Run these scenarios from the Backstage Scaffolder UI and retain the task
 details as evidence:
 
-1. **Valid request:** create a service with an existing group such as `wenia`,
+1. **Valid request:** create a service with an existing group such as
+   `platform`, `payments`, `transactions`, or `risk`,
    an API name/path, Node.js or Python, and Kubernetes or Lambda deployment.
    Confirm the repository, component, and API links in the task output.
 2. **Invalid request:** submit an uppercase or otherwise invalid service name,
@@ -62,6 +63,12 @@ details as evidence:
 4. **Generation failure:** temporarily use an invalid GitHub token in an
    isolated environment. The task must fail and show the failing step rather
    than register a successful catalog entity.
+
+## Demonstration script
+
+The ten-minute demonstration can follow
+[`docs/demo-script.md`](demo-script.md). It covers template selection, service
+generation, catalog registration, local execution, and an intentional error.
 
 ## Credentialed checks
 

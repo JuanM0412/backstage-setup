@@ -1,5 +1,10 @@
 # Documento técnico — capacidad de autoservicio
 
+> **Entregable:** este archivo Markdown es el documento técnico principal de
+> la solución. Describe la implementación existente, sus verificaciones,
+> límites y evolución propuesta; no presenta como realizados los despliegues
+> que requieren credenciales externas.
+
 ## 1. Objetivo y alcance
 
 La solución ofrece un camino de autoservicio para crear un microservicio
@@ -20,6 +25,47 @@ El alcance de esta entrega incluye:
 La solución no pretende ser todavía una plataforma multi-tenant completa:
 usa guest auth, almacenamiento en memoria para el ejemplo, un único contrato
 CRUD parametrizable y credenciales AWS estáticas en los workflows.
+
+## 1.1 Uso de IA y Organic Driven Development
+
+La solución se desarrolló utilizando IA como copiloto técnico dentro de un
+flujo de **Organic Driven Development (ODD)**. En este contexto, ODD significa
+hacer evolucionar la solución desde un camino funcional pequeño y verificable,
+dejando que las necesidades observadas en el flujo real de desarrollo guíen
+las siguientes decisiones, en lugar de diseñar una plataforma grande por
+anticipado.
+
+El ciclo aplicado fue:
+
+1. **Observar:** identificar el flujo real que debía funcionar: seleccionar
+   template, generar repositorio, registrar catálogo, ejecutar localmente y
+   manejar un error.
+2. **Formular:** convertir esas observaciones en decisiones y criterios
+   verificables, por ejemplo validación de nombres, owner desde el catálogo,
+   repositorio no duplicado y separación entre CI y CD.
+3. **Implementar:** construir la plantilla v1, los servicios Node.js/Python,
+   los manifiestos, Terraform y workflows alrededor de ese camino.
+4. **Verificar:** ejecutar type-check, formato y validación Terraform, además
+   de definir escenarios credentialed para GitHub, AWS y New Relic.
+5. **Aprender y evolucionar:** registrar límites y deuda operativa, como
+   guest auth, access keys, ausencia de rollback y observabilidad incompleta,
+   para priorizar una siguiente versión sin romper v1.
+
+La IA se utilizó para apoyar:
+
+- exploración del repositorio y localización de superficies relacionadas;
+- diseño y revisión de la arquitectura Backstage/AWS;
+- generación y mejora de código, configuración, documentación y pruebas;
+- detección de inconsistencias, como referenciar un grupo inexistente en la
+  guía de verificación;
+- revisión de errores, límites de seguridad y escenarios de fallo;
+- preparación de comandos reproducibles y criterios de aceptación.
+
+La IA no sustituyó la validación técnica. Las decisiones se contrastaron con
+el código del repositorio, la configuración efectiva, la salida de los
+comandos de verificación y los límites explícitos de los escenarios sin
+credenciales. No se afirma que un recurso AWS, un repositorio GitHub o una
+telemetría New Relic existan si no fueron comprobados en una cuenta real.
 
 ## 2. Arquitectura de la plataforma
 
@@ -195,5 +241,5 @@ Las métricas de éxito serán tiempo hasta repositorio utilizable, porcentaje d
 scaffolds exitosos, causas de fallo, tiempo de recuperación, primer intento
 exitoso de CI, tiempo merge-to-deploy, adopción por versión, tickets manuales,
 disponibilidad, errores y latencia. La IA apoyó revisión y detección de
-inconsistencias; cada cambio se contrastó con el código, logs de GitHub
-Actions y verificaciones locales.
+inconsistencias dentro del ciclo ODD; cada cambio se contrastó con el código,
+los logs de GitHub Actions disponibles y las verificaciones locales.

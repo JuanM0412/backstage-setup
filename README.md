@@ -21,6 +21,10 @@ Actions. New Relic is optional and is enabled with
 
 See [docs/verification.md](docs/verification.md) for reproducible local
 checks and the credentialed scenarios required for an end-to-end demonstration.
+The technical document is available as
+[Markdown](docs/technical-design.md), including the use of IA and Organic
+Driven Development. The live demonstration sequence is described in
+[docs/demo-script.md](docs/demo-script.md).
 
 ## Template versioning
 
