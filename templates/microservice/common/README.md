@@ -56,6 +56,12 @@ removes API Gateway methods that have no integration, which are left behind by
 incomplete API Gateway deployments and prevent a new deployment from being
 created.
 
+For example, a service named `lambda-node` is reachable at:
+
+```text
+https://<api-id>.execute-api.<aws-region>.amazonaws.com/prod/lambda-node/api/v1/items
+```
+
 Kubernetes services deploy to the EKS cluster configured in
 `EKS_CLUSTER_NAME` and expose an internet-facing ALB path under
 `/<service-name>/*`. The EKS cluster must have the AWS Load Balancer Controller

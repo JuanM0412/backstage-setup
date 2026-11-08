@@ -23,11 +23,7 @@ variable "source_dir" {
 variable "lambda_runtime" {
   description = "AWS Lambda runtime."
   type        = string
-{% if values.language == 'python' %}
-  default     = "python3.12"
-{% else %}
-  default     = "nodejs22.x"
-{% endif %}
+  default     = "{% if values.language == 'python' %}python3.12{% else %}nodejs22.x{% endif %}"
 }
 
 variable "lambda_handler" {
