@@ -42,7 +42,7 @@ catalog:
   locations:
     # Paths are relative to the backend process working directory.
     - type: file
-      target: ./templates/microservice/template.yaml
+      target: ./templates/microservice/v1/template.yaml
       rules:
         - allow: [Template]
 
@@ -50,10 +50,3 @@ catalog:
       target: ./templates/org.yaml
       rules:
         - allow: [Group]
-
-
-    # Local example organizational data
-    - type: file
-      target: ./examples/org.yaml
-      rules:
-        - allow: [User, Group]

@@ -23,7 +23,8 @@ const createGithubBranchesAction = (config: Config) =>
     },
     async handler(ctx) {
       const { host, owner, repo } = parseRepoUrl(ctx.input.repoUrl);
-      const integration = ScmIntegrations.fromConfig(config).github.byHost(host);
+      const integration =
+        ScmIntegrations.fromConfig(config).github.byHost(host);
 
       if (!integration?.config.token) {
         throw new Error(`No GitHub token configured for ${host}`);
@@ -70,6 +71,43 @@ const createGithubBranchesAction = (config: Config) =>
     },
   });
 
+const createGithubRepositoryAvailabilityAction = (config: Config) =>
+  createTemplateAction({
+    id: 'github:repo:validate-available',
+    description:
+      'Fails before publishing when a GitHub repository already exists',
+    schema: {
+      input: z =>
+        z.object({
+          repoUrl: z.string(),
+        }),
+    },
+    async handler(ctx) {
+      const { host, owner, repo } = parseRepoUrl(ctx.input.repoUrl);
+      const integration =
+        ScmIntegrations.fromConfig(config).github.byHost(host);
+
+      if (!integration?.config.token) {
+        throw new Error(`No GitHub token configured for ${host}`);
+      }
+
+      const client = new Octokit({ auth: integration.config.token });
+      try {
+        await client.rest.repos.get({ owner, repo });
+      } catch (error) {
+        if (isNotFound(error)) {
+          ctx.logger.info(`GitHub repository ${owner}/${repo} is available`);
+          return;
+        }
+        throw error;
+      }
+
+      throw new Error(
+        `GitHub repository ${owner}/${repo} already exists; choose a different service name`,
+      );
+    },
+  });
+
 function parseRepoUrl(repoUrl: string): {
   host: string;
   owner: string;
@@ -105,7 +143,10 @@ const githubBranchesModule = createBackendModule({
         scaffolderActions: scaffolderActionsExtensionPoint,
       },
       async init({ config, scaffolderActions }) {
-        scaffolderActions.addActions(createGithubBranchesAction(config));
+        scaffolderActions.addActions(
+          createGithubBranchesAction(config),
+          createGithubRepositoryAvailabilityAction(config),
+        );
       },
     });
   },

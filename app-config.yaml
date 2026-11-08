@@ -190,7 +190,7 @@ catalog:
   locations:
     # Paths are relative to the backend package directory: packages/backend.
     - type: file
-      target: ../../templates/microservice/template.yaml
+      target: ../../templates/microservice/v1/template.yaml
       rules:
         - allow: [Template]
 

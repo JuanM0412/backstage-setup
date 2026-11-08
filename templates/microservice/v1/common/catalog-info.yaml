@@ -1,0 +1,28 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.name }}
+  description: ${{ values.description }}
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    platform.wenia.com/template: microservice
+    platform.wenia.com/template-version: '1'
+spec:
+  type: service
+  lifecycle: experimental
+  owner: ${{ values.owner }}
+  providesApis:
+    - ${{ values.name }}-${{ values.apiName }}
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: ${{ values.name }}-${{ values.apiName }}
+  description: 'API for ${{ values.name }}: ${{ values.apiName }}'
+spec:
+  type: openapi
+  lifecycle: experimental
+  owner: ${{ values.owner }}
+  definition:
+    $text: ./docs/openapi.yaml

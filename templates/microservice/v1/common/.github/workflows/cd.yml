@@ -1,0 +1,217 @@
+name: Continuous Delivery
+
+on:
+  workflow_run:
+    workflows:
+      - Build Validation
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  AWS_REGION: {% raw %}${{ vars.AWS_REGION }}{% endraw %}
+  EKS_CLUSTER_NAME: {% raw %}${{ vars.EKS_CLUSTER_NAME || secrets.EKS_CLUSTER_NAME }}{% endraw %}
+  TF_STATE_KEY: services/${{ values.name }}/${{ values.deployment }}.tfstate
+  DEPLOYMENT: ${{ values.deployment }}
+
+jobs:
+  deploy:
+    if: {% raw %}${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}{% endraw %}
+    name: deploy-${{ values.deployment }}
+    runs-on: ubuntu-latest
+    environment: aws-infrastructure
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: {% raw %}${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}{% endraw %}
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: {% raw %}${{ secrets.AWS_ACCESS_KEY_ID }}{% endraw %}
+          aws-secret-access-key: {% raw %}${{ secrets.AWS_SECRET_ACCESS_KEY }}{% endraw %}
+          aws-region: {% raw %}${{ env.AWS_REGION }}{% endraw %}
+
+      - name: Validate deployment configuration
+        run: |
+          test -n "$AWS_REGION" || { echo "::error::AWS_REGION is required in the aws-infrastructure environment"; exit 1; }
+{% if values.deployment == 'kubernetes' %}
+          test -n "$EKS_CLUSTER_NAME" || { echo "::error::EKS_CLUSTER_NAME is required as a variable or secret in the aws-infrastructure environment"; exit 1; }
+{% endif %}
+{% if values.deployment == 'lambda' %}
+          test -n "{% raw %}${{ vars.API_GATEWAY_NAME }}{% endraw %}" || { echo "::error::API_GATEWAY_NAME is required in the aws-infrastructure environment"; exit 1; }
+{% endif %}
+
+{% if values.deployment == 'lambda' and values.language == 'nodejs' %}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Node.js dependencies
+        run: |
+          cp package.json src/package.json
+          npm install --prefix src --omit=dev
+{% endif %}
+
+{% if values.deployment == 'lambda' and values.language == 'python' %}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements-runtime.txt -t src
+{% endif %}
+
+{% if values.deployment == 'kubernetes' %}
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: {% raw %}${{ github.actor }}{% endraw %}
+          password: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+
+      - name: Build and publish image
+        env:
+          IMAGE: ghcr.io/{% raw %}${{ github.repository }}{% endraw %}:{% raw %}${{ github.sha }}{% endraw %}
+        run: |
+          docker build --tag "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Configure GHCR pull secret
+        env:
+          GHCR_USERNAME: {% raw %}${{ github.actor }}{% endraw %}
+          GHCR_TOKEN: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+        run: |
+          aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
+          kubectl create secret docker-registry ghcr-pull \
+            --namespace default \
+            --docker-server=ghcr.io \
+            --docker-username="$GHCR_USERNAME" \
+            --docker-password="$GHCR_TOKEN" \
+            --dry-run=client -o yaml | kubectl apply -f -
+{% endif %}
+{% if values.deployment == 'lambda' %}
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+
+      - name: Terraform init
+        working-directory: terraform
+        env:
+          TF_STATE_BUCKET: {% raw %}${{ vars.TF_STATE_BUCKET }}{% endraw %}
+          TF_VAR_aws_region: {% raw %}${{ vars.AWS_REGION }}{% endraw %}
+          TF_VAR_api_gateway_name: {% raw %}${{ vars.API_GATEWAY_NAME }}{% endraw %}
+          TF_VAR_eks_cluster_name: {% raw %}${{ env.EKS_CLUSTER_NAME }}{% endraw %}
+        run: |
+          test -n "$TF_STATE_BUCKET" || { echo "::error::TF_STATE_BUCKET is required"; exit 1; }
+          test -n "$TF_VAR_aws_region" || { echo "::error::AWS_REGION is required"; exit 1; }
+          if [ "$DEPLOYMENT" = "lambda" ]; then
+            test -n "$TF_VAR_api_gateway_name" || { echo "::error::API_GATEWAY_NAME is required"; exit 1; }
+          else
+            test -n "$TF_VAR_eks_cluster_name" || { echo "::error::EKS_CLUSTER_NAME is required"; exit 1; }
+          fi
+          terraform init \
+            -backend-config="bucket=$TF_STATE_BUCKET" \
+            -backend-config="key=$TF_STATE_KEY" \
+            -backend-config="region=$AWS_REGION" \
+            -backend-config="encrypt=true"
+          if [ "$DEPLOYMENT" = "lambda" ]; then
+            terraform state rm aws_api_gateway_stage.service 2>/dev/null || true
+          fi
+
+{% if values.deployment == 'lambda' %}
+      - name: Remove orphaned API Gateway methods
+        env:
+          API_GATEWAY_NAME: {% raw %}${{ vars.API_GATEWAY_NAME }}{% endraw %}
+        run: |
+          api_gateway_id="$(aws apigateway get-rest-apis \
+            --query "items[?name=='$API_GATEWAY_NAME'].id | [0]" \
+            --output text)"
+          if [ -z "$api_gateway_id" ] || [ "$api_gateway_id" = "None" ]; then
+            echo "::error::API Gateway '$API_GATEWAY_NAME' was not found"
+            exit 1
+          fi
+          aws apigateway get-resources \
+            --rest-api-id "$api_gateway_id" \
+            --embed methods \
+            --output json |
+            jq -r '.items[] | select(.resourceMethods != null) | [.id, (.resourceMethods | keys[])] | @tsv' |
+            while IFS=$'\t' read -r resource_id http_method; do
+              method_json="$(aws apigateway get-method \
+                --rest-api-id "$api_gateway_id" \
+                --resource-id "$resource_id" \
+                --http-method "$http_method")"
+              if ! jq -e '.methodIntegration' >/dev/null <<<"$method_json"; then
+                echo "Removing orphaned API Gateway method $http_method on resource $resource_id"
+                aws apigateway delete-method \
+                  --rest-api-id "$api_gateway_id" \
+                  --resource-id "$resource_id" \
+                  --http-method "$http_method"
+              fi
+            done
+{% endif %}
+
+      - name: Terraform apply
+        working-directory: terraform
+        env:
+          IMAGE: ghcr.io/{% raw %}${{ github.repository }}{% endraw %}:{% raw %}${{ github.sha }}{% endraw %}
+          TF_VAR_aws_region: {% raw %}${{ vars.AWS_REGION }}{% endraw %}
+          TF_VAR_api_gateway_name: {% raw %}${{ vars.API_GATEWAY_NAME }}{% endraw %}
+          TF_VAR_eks_cluster_name: {% raw %}${{ env.EKS_CLUSTER_NAME }}{% endraw %}
+        run: |
+          if [ "$DEPLOYMENT" = "lambda" ]; then
+            terraform apply -auto-approve
+          else
+            terraform apply -auto-approve -var="container_image=$IMAGE"
+          fi
+{% endif %}
+
+{% if values.deployment == 'kubernetes' %}
+      - name: Configure kubectl
+        env:
+          EKS_CLUSTER_NAME: {% raw %}${{ env.EKS_CLUSTER_NAME }}{% endraw %}
+        run: aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
+
+      - name: Apply Kubernetes manifests
+        env:
+          IMAGE: ghcr.io/{% raw %}${{ github.repository }}{% endraw %}:{% raw %}${{ github.sha }}{% endraw %}
+        run: |
+          sed "s#CONTAINER_IMAGE#$IMAGE#g" k8s/deployment.yaml | kubectl apply -f -
+          kubectl apply -f k8s/service.yaml
+          kubectl rollout status deployment/${{ values.name }} --namespace default --timeout=5m
+          kubectl get deployment/${{ values.name }} --namespace default
+{% endif %}
+
+{% if values.deployment == 'lambda' %}
+      - name: Update shared API Gateway stage
+        working-directory: terraform
+        env:
+          API_GATEWAY_NAME: {% raw %}${{ vars.API_GATEWAY_NAME }}{% endraw %}
+          API_GATEWAY_STAGE: prod
+        run: |
+          api_gateway_id="$(aws apigateway get-rest-apis \
+            --query "items[?name=='$API_GATEWAY_NAME'].id | [0]" \
+            --output text)"
+          deployment_id="$(terraform output -raw api_gateway_deployment_id)"
+          if [ -z "$api_gateway_id" ] || [ "$api_gateway_id" = "None" ]; then
+            echo "::error::API Gateway '$API_GATEWAY_NAME' was not found"
+            exit 1
+          fi
+          if aws apigateway get-stage \
+            --rest-api-id "$api_gateway_id" \
+            --stage-name "$API_GATEWAY_STAGE" >/dev/null 2>&1; then
+            aws apigateway update-stage \
+              --rest-api-id "$api_gateway_id" \
+              --stage-name "$API_GATEWAY_STAGE" \
+              --patch-operations "op=replace,path=/deploymentId,value=$deployment_id"
+          else
+            aws apigateway create-stage \
+              --rest-api-id "$api_gateway_id" \
+              --stage-name "$API_GATEWAY_STAGE" \
+              --deployment-id "$deployment_id"
+          fi
+{% endif %}

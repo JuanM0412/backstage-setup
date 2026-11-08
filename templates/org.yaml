@@ -1,10 +1,50 @@
 apiVersion: backstage.io/v1alpha1
 kind: Group
 metadata:
-  name: wenia
-  description: Wenia engineering team
+  name: platform
+  description: Platform Engineering team
 spec:
   type: team
   profile:
-    displayName: Wenia
+    displayName: Platform Engineering
+    email: platform@wenia.com
+  children: []
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: payments
+  description: Payments engineering team
+spec:
+  type: team
+  profile:
+    displayName: Payments
+    email: payments@wenia.com
+  children: []
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: transactions
+  description: Transactions engineering team
+spec:
+  type: team
+  profile:
+    displayName: Transactions
+    email: transactions@wenia.com
+  children: []
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: risk
+  description: Risk engineering team
+spec:
+  type: team
+  profile:
+    displayName: Risk
+    email: risk@wenia.com
   children: []
